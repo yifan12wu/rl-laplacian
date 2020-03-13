@@ -5,9 +5,7 @@ import collections
 # H: horizon, number of transitions.
 # h: 0,...,H.
 # r: episodic return.
-EpisodicStep = collections.namedtuple('EpisodicStep', 
-        'step, h, H, r')
-
+EpisodicStep = collections.namedtuple('EpisodicStep', 'step, h, H, r')
 
 
 class EpisodicReplayBuffer:
@@ -16,13 +14,14 @@ class EpisodicReplayBuffer:
     def __init__(self, max_size):
         self._max_size = max_size
         self._current_size = 0
-        #self._curr_idx = 0
-        #self._step_1 = []
-        #self._step_2 = []
-        #self._prev_step = None
+        self._current_idx = 0
         self._episodes = []
         self._episode_buffer = []
         self._r = 0.0
+        # other indexing for sampling
+        self._steps = []
+        self._step1s = []
+        self._step2s = []
 
     def add_steps(self, steps):
         '''
