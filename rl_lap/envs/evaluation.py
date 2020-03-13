@@ -1,7 +1,5 @@
-import logging
 import numpy as np
 
-import time
 
 class BasicEvaluator(object):
 
@@ -10,7 +8,7 @@ class BasicEvaluator(object):
         self._max_ep_len = max_ep_len
         self._rshift = rshift
 
-    def run_test(self, n_episodes, policy_fn, render=False):
+    def run_test(self, n_episodes, policy_fn):
         n = n_episodes
         env = self._env_factory()
         r = np.zeros([n])
@@ -24,8 +22,6 @@ class BasicEvaluator(object):
                 state = (ts, context)
                 a, context = policy_fn(state)
                 ts = env.step(a)
-                if render:
-                    env.render()
                 r_tmp += (ts.reward + self._rshift)
             r[i] = r_tmp
         r_mean = np.mean(r)

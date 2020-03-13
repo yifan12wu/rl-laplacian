@@ -1,7 +1,10 @@
 import collections
 import numpy as np
 
-TimeStep = collections.namedtuple('TimeStep', 'observation, reward, step_type, info')
+# is final: terminal state
+# is last: last step in an episode, may not be terminal state
+TimeStep = collections.namedtuple('TimeStep', 
+        'observation, reward, is_final, is_last, info')
 
 class ContinuousActionSpec(object):
 
@@ -28,13 +31,13 @@ class DiscreteActionSpec(object):
     def sample_batch(self, size):
         return np.random.randint(self.n, size=size)
 
-
+'''
 class StepType(object):
 
     FIRST = 0
     MID = 1
     FINAL = 2
-
+'''
 
 
 class Task(object):
@@ -94,7 +97,7 @@ class Environment(object):
         obs = self._task.get_observation()
         reward = self._task.get_reward()  # should be 0?
         info = self._task.get_info()
-        self._last_step = TimeStep(obs, reward, StepType.FIRST, info)
+        self._last_step = TimeStep(obs, reward, False, False, info)
         self._should_restart = False
         return self._last_step
 
@@ -108,14 +111,17 @@ class Environment(object):
         is_final = self._task.is_end_episode()
         past_timelimit = self._task.past_timelimit() 
         if is_final:
-            step_type = StepType.FINAL
+            is_final = True
+            is_last = True
             self._should_restart = True
         elif past_timelimit:
-            step_type = StepType.MID
+            is_final = False
+            is_last = True
             self._should_restart = True
         else:
-            step_type = StepType.MID
-        self._last_step = TimeStep(obs, reward, step_type, info)
+            is_final = False
+            is_last = False
+        self._last_step = TimeStep(obs, reward, is_final, is_last, info)
         return self._last_step
 
     @property

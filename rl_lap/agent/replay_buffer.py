@@ -6,7 +6,6 @@ MID = env_base.StepType.MID
 FINAL = env_base.StepType.FINAL
 
 class ReplayBuffer(object):
-    """Store trajectories, support positive and negative sampling."""
 
     def __init__(self, max_size):
         self._max_size = max_size

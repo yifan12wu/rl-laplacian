@@ -1,7 +1,10 @@
+import collections
 from . import env_base
 
+Step = collections.namedtuple('Step', 'time_step, action, context')
 
-class SingleActor:
+
+class Actor:
 
     def __init__(self, env_factory):
         self._env = env_factory()
@@ -13,7 +16,7 @@ class SingleActor:
         for _ in range(n):
             state = (self._time_step, self._context)
             action, context = policy_fn(state)
-            step = (self._time_step, action, self._context)
+            step = Step(self._time_step, action, self._context)
             steps.append(step)
             self._time_step = self._env.step(action)
             self._context = context
