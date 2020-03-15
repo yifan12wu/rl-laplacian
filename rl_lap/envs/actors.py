@@ -4,7 +4,7 @@ from . import env_base
 Step = collections.namedtuple('Step', 'time_step, action, context')
 
 
-class Actor:
+class StepActor:
 
     def __init__(self, env_factory):
         self._env = env_factory()

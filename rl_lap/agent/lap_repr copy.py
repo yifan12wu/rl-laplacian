@@ -1,15 +1,5 @@
-import logging
-import collections
-import torch
-from torch import optim
-
-from . import episodic_replay_buffer
-from ..envs import actors
-from ..tools import py_tools
-from ..tools import torch_tools
-from ..tools import flag_tools
-from ..tools import summary_tools
-
+class EmptyClass(object):
+  pass
 
 def l2_dist(x):
   x = tf.reshape(x, [x.shape.as_list()[0], -1])
@@ -59,174 +49,37 @@ def neg_loss_sigmoid(x, c=1.0):
 
 
 
-class LapReprLearner:
+class W2VLearner(object):
 
-    @pytools.store_args
-    def __init__(self,
-            # env args
-            obs_shape=None,
-            obs_prepro=None,
-            env_factory=None,
-            # learner args
-            model_cfg=None,
-            optimizer_cfg=None,
-            n_samples=10000,
-            batch_size=128,
-            discount=0.0,
-            w_neg=1.0,
-            c_neg=1.0,
-            replay_buffer_size=10000,
-            # trainer args
-            log_dir='/tmp/rl/log',
-            total_train_steps=50000,
-            print_freq=1000,
-            save_freq=10000,
-            # pytorch
-            device=None,
-            ):
-        self._build()
+  def __init__(self, obs_shape, pos_batch_size, neg_batch_size,
+               repr_module=None, neg_loss_c=1.0, w_neg=1.0,
+               learning_rate=1e-4, optimizer=tf.train.AdamOptimizer,
+               scope_name='learner', obs_to_repr=(lambda x: x),
+               sample_discount=0.9, sample_max_range=1,
+              ):
+    self._obs_shape = obs_shape
+    self._pos_batch_size = pos_batch_size
+    self._neg_batch_size = neg_batch_size
+    self._repr_module = repr_module
+    self._neg_loss_c = neg_loss_c
+    self._learning_rate = learning_rate
+    self._scope_name = scope_name
+    self._obs_to_repr = obs_to_repr
+    self._global_step = 0
+    self._optimizer=optimizer
+    self._w_neg = w_neg
+    self._sample_discount = sample_discount
+    self._sample_max_range = sample_max_range
 
-    def _build(self):
-        if self._device is None:
-            self._device = torch.device(
-                    'cuda' if torch.cuda.is_available() else 'cpu')
-        logging.info('device: {}.'.format(self._device))
-        self._build_model()
-        self._build_optimizer()
-        self._replay_buffer = episodic_replay_buffer.EpisodicReplayBuffer(
-                max_size=self._replay_buffer_size)
-        self._global_step = 0
-        self._train_info = collections.ordereddict()
+    #self._num_actions = self._action_spec.n
+    self._build_learner()
+    self._session = None
 
-    def _build_model(self):
-        pass
+  def load_session(self, sess):
+    self._session = sess
 
-    def _build_optimizer(self):
-        cfg = self._optimizer_cfg
-        opt_fn = getattr(optim, cfg.name)
-        self._optimizer = opt_fn(
-                self._repr_fn.parameters(),
-                lr=cfg.lr,
-                )
-
-    def _build_loss(self, batch):
-        raise NotImplementedError
-    
-    def _random_policy_fn(self, state):
-        return self._action_spec.sample(), None
-
-    def _get_obs_batch(self, steps):
-        # each step is a tuple of (time_step, action, context)
-        obs_batch = [self._obs_prepro(ts[0].observation) for ts in steps]
-        return np.stack(obs_batch, axis=0)
-
-    def _tensor(self, x):
-        return torch_tools.to_tensor(x, self._device)
-
-    def _get_train_batch(self):
-        s1, s2 = self._replay_buffer.sample_pairs(
-                batch_size=self._batch_size,
-                discount=self._discount,
-                )
-        s_neg = self._replay_buffer.sample_steps(self._batch_size)
-        s1, s2, s_neg = map(self._get_obs_batch, [s1, s2, s_neg])
-        batch = flag_tools.Flags()
-        batch.s1 = self._tensor(s1)
-        batch.s2 = self._tensor(s2)
-        batch.s_neg = self._tensor(s_neg)
-        return batch
-
-    def _train_step(self):
-        train_batch = self._get_train_batch()
-        loss = self._build_loss(train_batch)
-        self._optimizer.zero_grad()
-        loss.backward()
-        self._optimizer.step()
-        self._global_step += 1
-
-    def _print_train_info(self):
-        summary_str = summary_tools.get_summary_str(
-                step=self._global_step, info=self._train_info)
-        logging.info(summary_str)
-
-    def train(self):
-        saver_dir = self._log_dir
-        if not os.path.exists(saver_dir):
-            os.makedirs(saver_dir)
-        actor = actors.StepActor(self._env_factory)
-        evaluator = evaluation.BasicEvaluator(self._test_env_factory)
-        result_path = os.path.join(saver_dir, 'result.csv')
-
-        # start actors, collect trajectories from random actions
-        logging.info('Start collecting transitions.')
-        start_time = time.time()
-        # collect initial transitions
-        total_n_steps = 0
-        collect_batch = 10000
-        while total_n_steps < self._replay_buffer_init:
-            n_steps = min(collect_batch, 
-                    self._replay_buffer_init - total_n_steps)
-            steps = actor.get_steps(n_steps, self._random_policy_fn)
-            self._replay_buffer.add_steps(steps)
-            total_n_steps += n_steps
-            logging.info('({}/{}) steps collected.'
-                .format(total_n_steps, self._replay_buffer_init))
-        time_cost = time.time() - start_time
-        logging.info('Replay buffer initialization finished, time cost: {}s'
-            .format(time_cost))
-        # learning begins
-        start_time = time.time()
-        test_results = []
-        for step in range(self._total_train_steps):
-            assert step == self._global_step
-            self._train_step()
-            # update replay memory:
-            if (step + 1) % self._replay_update_freq == 0:
-                steps = actor.get_steps(self._replay_update_num,
-                        self._train_policy_fn)
-            self._replay_buffer.add_steps(steps)
-            # save
-            if (step + 1) % self._save_freq == 0:
-                saver_path = os.path.join(saver_dir, 
-                        'agent-{}.ckpt'.format(step+1))
-                self.save_ckpt(saver_path)
-            # print info
-            if step == 0 or (step + 1) % self._print_freq == 0:
-                time_cost = time.time() - start_time
-                logging.info('Training steps per second: {:.4g}.'
-                        .format(self._print_freq/time_cost))
-                self._print_train_info()
-                start_time = time.time()
-            # test
-            if step == 0 or (step + 1) % self._test_freq == 0:
-                tst = time.time()
-                test_result = evaluator.run_test(self._n_test_episodes,
-                        self._test_policy_fn)
-                edt = time.time()
-                test_results.append(
-                        [step+1] + list(test_result) + [edt-tst])
-                self._print_test_info(test_results)
-        saver_path = os.path.join(saver_dir, 'agent.ckpt')
-        self.save_ckpt(saver_path)
-        test_results = np.array(test_results)
-        np.savetxt(result_path, test_results, fmt='%.4g', delimiter=',')
-
-    def save_ckpt(self, filepath):
-        torch.save(self._repr_fn.state_dict(), filepath)
-
-
-class BaseModules(object):
-
-    def __init__(self, modules, obs_shape, action_spec):
-        self._modules = modules
-        self._obs_shape = obs_shape
-        self._action_spec = action_spec
-
-    def build(self, model='learn', device=torch.device('cpu')):
-        # should return an object that contains (e.g.):
-        # vars_save, vars_train, vars_sync
-        raise NotImplementedError
-
+  def release_session(self):
+    self._session = None
 
   def _build_learner(self):
 
@@ -409,4 +262,106 @@ class W2VUnbiasedLearner(W2VLearner):
         holders.s2_neg: s2_neg,
         }
     return feed_dict
+
+
+class SpecNetLearner(W2VLearner):
+
+  def __init__(self, obs_shape, batch_size, repr_module=None,
+               learning_rate=1e-4, optimizer=tf.train.AdamOptimizer,
+               scope_name='learner', obs_to_repr=(lambda x: x),
+              ):
+    self._obs_shape = obs_shape
+    self._batch_size = batch_size
+    self._repr_module = repr_module
+    self._learning_rate = learning_rate
+    self._scope_name = scope_name
+    self._obs_to_repr = obs_to_repr
+    self._global_step = 0
+    self._optimizer=optimizer
+
+    #self._num_actions = self._action_spec.n
+    self._build_learner()
+    self._session = None
+
+  def _build_learner(self):
+
+    # set up tf graph for training
+    self._train_holders = self._build_train_holders()
+    # instantiate networks
+    with tf.variable_scope(self._scope_name):
+      with tf.variable_scope('repr_net'):
+        self._repr_net = self._repr_module()
+
+    repr_s1, repr_s2 = map(
+        self._repr_net,
+        [self._train_holders.s1, self._train_holders.s2]
+    )
+    repr_s1 = self._final_layer(repr_s1)
+    repr_s2 = self._final_layer(repr_s2)
+    self._loss = pos_loss(repr_s1, repr_s2)
+
+    # optimization
+    opt = self._optimizer(learning_rate=self._learning_rate)
+    self._train_op = opt.minimize(self._loss)
+    # saver
+    self._var_list = self._repr_net.get_variables()
+    self._model_saver = tf.train.Saver(var_list=self._var_list)
+
+
+  def _final_layer_old(self, x):
+    n = x.shape.as_list()[0]
+    d = x.shape.as_list()[1]
+    eps = 0  # 1e-10
+    h = tf.cholesky(tf.matmul(tf.transpose(x), x) + tf.eye(d) * eps)
+    h = tf.transpose(tf.matrix_inverse(h)) * tf.sqrt(float(n))
+    return tf.matmul(x, h)
+
+  def _final_layer(self, x):
+    n = x.shape.as_list()[0]
+    #d = x.shape.as_list()[1]
+    #eps = 0  # 1e-10
+    #h = tf.cholesky(tf.matmul(tf.transpose(x), x) + tf.eye(d) * eps)
+    #h = tf.transpose(tf.matrix_inverse(h)) * tf.sqrt(float(n))
+    with tf.device('/cpu:0'):
+      h = tf.svd(x)[1] * tf.sqrt(float(n))
+    return h
+
+
+  def _build_train_holders(self):
+    holders = EmptyClass()
+    holders.s1 = tf.placeholder(tf.float32, [self._batch_size]+self._obs_shape)
+    holders.s2 = tf.placeholder(tf.float32, [self._batch_size]+self._obs_shape)
+    return holders
+
+  def _get_train_batch(self, replay_memory):
+    ts1, ts2 = replay_memory.sample_transitions(
+        batch_size=self._batch_size,
+    )
+    #a = self._get_action_batch(ts1)
+    s1, s2 = map(self._get_obs_batch, [ts1, ts2])
+    # compute reward and discount
+    #r, dsc = self._get_r_dsc_batch(ts2)
+    holders = self._train_holders
+    feed_dict = {
+        holders.s1: s1,
+        holders.s2: s2,
+        }
+    return feed_dict
+
+
+  def train_step(self, sess, replay_memory, step, print_freq):
+    #sess = self._session
+    feed_dict = self._get_train_batch(replay_memory)
+    loss, _ = sess.run(
+        [self._loss, self._train_op],
+        feed_dict=feed_dict)
+    # print info
+    if step == 0 or (step + 1) % print_freq == 0:
+      logging.info(('Step {}:  loss {:.4g}.'
+                   ).format(step+1, loss))
+      print(('Step {}:  loss {:.4g}.'
+            ).format(step+1, loss))
+    batch = self._get_batch_dict(feed_dict)
+    self._global_step += 1
+    return batch
 

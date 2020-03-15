@@ -57,13 +57,13 @@ class BaseAgent(object):
         if self._device is None:
             self._device = torch.device(
                     'cuda' if torch.cuda.is_available() else 'cpu')
-        logging.info('Device: {}.'.format(self._device))
+        logging.info('device: {}.'.format(self._device))
         self._build_model_fns()
         self._build_optimizers()
-        self._replay_buffer = replay_buffer.ReplayBuffer(
+        self._replay_buffer = replay_buffer.replaybuffer(
                 max_size=self._replay_buffer_size)
         self._global_step = 0
-        self._train_info = collections.OrderedDict()
+        self._train_info = collections.ordereddict()
 
     def _build_optimizers(self): 
         # default e.g. for dqn
