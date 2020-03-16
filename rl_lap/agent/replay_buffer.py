@@ -1,9 +1,4 @@
 import numpy as np
-from ..envs import env_base
-
-FIRST = env_base.StepType.FIRST
-MID = env_base.StepType.MID
-FINAL = env_base.StepType.FINAL
 
 class ReplayBuffer(object):
 
@@ -16,11 +11,11 @@ class ReplayBuffer(object):
         self._prev_step = None
 
     def add_steps(self, steps):
-        """
-        steps: a list of (time_step, action, context tuples)
-        """
+        '''
+        steps: a list of (time_step, action, context tuples).
+        '''
         for step in steps:
-            if self._prev_step is not None and step[0].step_type != FIRST:
+            if (self._prev_step is not None) and (not self._prev_step.is_last):
                 if self._size < self._max_size:
                     self._step_1.append(self._prev_step)
                     self._step_2.append(step)
@@ -41,7 +36,6 @@ class ReplayBuffer(object):
         indices = np.random.choice(self._size, batch_size, replace=True)
         s = list([self._step_2[idx] for idx in indices])
         return s
-
 
     def sample_n_steps(self, batch_size, n):
         indices = np.random.choice(self._size-n+1, batch_size, replace=True)

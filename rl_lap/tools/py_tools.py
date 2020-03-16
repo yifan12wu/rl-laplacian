@@ -2,10 +2,9 @@ import inspect
 import functools
 
 def store_args(fn):
-    """
-    Save all arguments 'key' as 'self._key'. 
-    Assume first arg is 'self'.
-    """
+    '''
+    Decorator for saving arguments in __init__ as class attributes.
+    '''
     fn_args = inspect.signature(fn).parameters
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):
@@ -24,7 +23,7 @@ def store_args(fn):
 
 
 def store_attrs(fn):
-    """Same as store_args, but without prefix '_'."""
+    '''Same as store_args, but without prefix '_'.'''
     fn_args = inspect.signature(fn).parameters
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):
