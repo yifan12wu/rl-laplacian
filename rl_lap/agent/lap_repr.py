@@ -242,10 +242,12 @@ class LapReprConfig(flag_tools.ConfigBase):
     def _env_factory(self):
         raise NotImplementedError
 
+    def _model_factory(self):
+        raise NotImplementedError
+
     def _build_model(self):
-        def model_factory():
-            raise NotImplementedError
-        self._model_cfg = flag_tools.Flags(model_factory=model_factory)
+        self._model_cfg = flag_tools.Flags(
+                model_factory=self._model_factory)
 
     def _build_optimizer(self):
         opt = getattr(optim, self._flags.opt_args.name)

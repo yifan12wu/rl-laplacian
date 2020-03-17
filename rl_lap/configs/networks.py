@@ -4,13 +4,12 @@ from torch import nn
 from torch.nn import functional as F
 
 
-class ReprNetMLP(nn.Module):
+class MLP(nn.Module):
 
-    def __init__(self, obs_shape, action_spec,
-            n_layers, n_units):
+    def __init__(self, input_shape, n_layers, n_units):
         super().__init__()
         self._layers = []
-        n_in = int(np.prod(np.array(obs_shape)))
+        n_in = int(np.prod(np.array(input_shape)))
         for i in range(n_layers):
             layer = nn.Linear(n_in, n_units)
             self.add_module('hidden_layer_{}'.format(i+1), layer)
@@ -24,29 +23,41 @@ class ReprNetMLP(nn.Module):
         return h
 
 
-class DiscreteQNetMLP(nn.Module):
+class ReprNetMLP(nn.Module):
 
-    def __init__(self, obs_shape, action_spec,
-            n_layers, n_units, fix_repr=False):
+    def __init__(self, input_shape, n_layers, n_units, d):
         super().__init__()
-        self._fix_repr = fix_repr
-        self.repr_fn = ReprNetMLP(obs_shape=obs_shape, 
-                action_spec=action_spec, n_layers=n_layers,
-                n_units=n_units)
+        self.mlp = MLP(input_shape, n_layers, n_units)
         if n_layers >= 1:
             n_in = n_units
         else:
-            n_in = int(np.prod(np.array(obs_shape)))
-        self.out_layer = nn.Linear(n_in, action_spec.n)
+            n_in = int(np.prod(np.array(input_shape)))
+        self.out_layer = nn.Linear(n_in, d)
+
+    def forward(self, x):
+        h = self.mlp(x)
+        o = self.out_layer(h)
+        return o
+
+
+class DiscreteQNetMLP(nn.Module):
+
+    def __init__(self, input_shape, n_actions,
+            n_layers, n_units):
+        super().__init__()
+        self.mlp = MLP(input_shape, n_layers, n_units)
+        if n_layers >= 1:
+            n_in = n_units
+        else:
+            n_in = int(np.prod(np.array(input_shape)))
+        self.out_layer = nn.Linear(n_in, n_actions)
         # torch.nn.init.uniform_(
         #         self.out_layer.weight, -0.001, 0.001)
         # torch.nn.init.constant_(
         #         self.out_layer.bias, 0.0)
 
     def forward(self, x):
-        h = self.repr_fn(x)
-        if self._fix_repr:
-            h = h.detach()
+        h = self.mlp(x)
         o = self.out_layer(h)
         return o
 
