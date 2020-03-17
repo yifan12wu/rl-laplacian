@@ -1,14 +1,16 @@
 import numpy as np
 import collections
 
-
 from .. import env_base
 
+
 ObservationType = collections.namedtuple('ObservationType', 'image, position, index')
+
 
 AGENT_COLOR = (1., 0., 0.)
 WALL_COLOR = (0., 0., 0.)
 GROUND_COLOR = (1., 1., 1.)
+
 
 def one_hot(x, n):
     if len(np.shape(x)) == 0:
@@ -40,16 +42,24 @@ class Maze2DBase(env_base.Task):
         if type(start_pos) == str:
             assert start_pos in ['first', 'random']
         self._start_pos = start_pos
-
         if use_stay_action:
-            self._action_map = np.array([[-1, 0], [1, 0], [0, -1], [0, 1], [0, 0]])
+            self._action_map = np.array(
+                    [[-1, 0], 
+                    [1, 0], 
+                    [0, -1], 
+                    [0, 1], 
+                    [0, 0]])
         else:
-            self._action_map = np.array([[-1, 0], [1, 0], [0, -1], [0, 1]])
-        self._action_spec = env_base.DiscreteActionSpec(self._action_map.shape[0])
+            self._action_map = np.array(
+                [[-1, 0], 
+                [1, 0], 
+                [0, -1], 
+                [0, 1]])
+        self._action_spec = env_base.DiscreteActionSpec(
+                self._action_map.shape[0])
         # to be maintained during each episode
         self._agent_pos = None # a numpy array with shape (2,)
         self._steps_taken = None # number of steps taken so far
-        self._episode_history = None # track where the agent has visited in each episode
         self._should_end_episode = None
 
     def begin_episode(self):
@@ -62,8 +72,6 @@ class Maze2DBase(env_base.Task):
         else:
             self._agent_pos = self._start_pos.copy()
         self._steps_taken = 0
-        self._episode_history = np.zeros_like(self._maze.maze_array, dtype=int)
-        self._episode_history[tuple(self._agent_pos)] += 1
         self._should_end_episode = False
 
     def step(self, action):
@@ -72,7 +80,6 @@ class Maze2DBase(env_base.Task):
         new_agent_pos = self._agent_pos + self._action_map[action]
         if self._maze.is_empty(new_agent_pos):
             self._agent_pos = new_agent_pos
-        self._episode_history[tuple(self._agent_pos)] += 1
 
     def get_observation(self):
         return self.pos_to_obs(self._agent_pos)
@@ -108,10 +115,6 @@ class Maze2DBase(env_base.Task):
 
     def past_timelimit(self):
         return self._steps_taken >= self._episode_len
-
-    @property
-    def episode_history(self):
-        return self._episode_history
 
     @property
     def action_spec(self):

@@ -209,6 +209,7 @@ class LapReprConfig(flag_tools.ConfigBase):
     def _set_default_flags(self):
         flags = self._flags
         flags.device = None
+        flags.env_id = None
         # agent
         flags.model_args = flag_tools.Flags(d=20)
         flags.opt_args = flag_tools.Flags(name='Adam', lr=0.001)
@@ -231,13 +232,9 @@ class LapReprConfig(flag_tools.ConfigBase):
         self._build_optimizer()
         self._build_args()
 
-    def _build_env(self):
-        dummy_env = self._env_factory()
-        dummy_time_step = dummy_env.reset()
-        self._action_spec = dummy_env.action_spec
-        self._obs_prepro = lambda x: x
-        self._obs_shape = list(self._obs_prepro(
-            dummy_time_step.observation).shape)
+
+    def _obs_prepro(self, obs):
+        return obs
 
     def _env_factory(self):
         raise NotImplementedError
@@ -245,17 +242,25 @@ class LapReprConfig(flag_tools.ConfigBase):
     def _model_factory(self):
         raise NotImplementedError
 
+    def _optimizer_factory(self, parameters):
+        opt_fn = opt(parameters, lr=self._flags.opt_args.lr)
+        return opt_fn
+
+    def _build_env(self):
+        dummy_env = self._env_factory()
+        dummy_time_step = dummy_env.reset()
+        self._action_spec = dummy_env.action_spec
+        self._obs_shape = list(self._obs_prepro(
+            dummy_time_step.observation).shape)
+
     def _build_model(self):
         self._model_cfg = flag_tools.Flags(
                 model_factory=self._model_factory)
 
     def _build_optimizer(self):
         opt = getattr(optim, self._flags.opt_args.name)
-        def optimizer_factory(parameters):
-            opt_fn = opt(parameters, lr=self._flags.opt_args.lr)
-            return opt_fn
         self._optimizer_cfg = flag_tools.Flags(
-                optimizer_factory=optimizer_factory)
+                optimizer_factory=self._optimizer_factory)
 
     def _build_args(self):
         args = flag_tools.Flags()

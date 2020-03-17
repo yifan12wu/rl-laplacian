@@ -3,7 +3,9 @@ import collections
 
 from . import maze2d_base
 
+
 ObservationType = collections.namedtuple('ObservationType', 'agent, goal')
+
 
 class Maze2DSingleGoal(maze2d_base.Maze2DBase):
 
@@ -16,7 +18,7 @@ class Maze2DSingleGoal(maze2d_base.Maze2DBase):
             reward_type='neg',
             goal_pos=None,
             end_at_goal=False):
-        super(Maze2DSingleGoal, self).__init__(
+        super().__init__(
                 maze=maze,
                 episode_len=episode_len,
                 start_pos=start_pos,
@@ -35,7 +37,7 @@ class Maze2DSingleGoal(maze2d_base.Maze2DBase):
         self._goal_achieved = False
 
     def begin_episode(self):
-        super(Maze2DSingleGoal, self).begin_episode()
+        super().begin_episode()
         # set goal pos if random
         if self._rand_goal_pos:
             self._goal_pos = self._maze.random_empty_grids(1)[0]
@@ -43,7 +45,7 @@ class Maze2DSingleGoal(maze2d_base.Maze2DBase):
         self._goal_achieved = False
 
     def step(self, action):
-        super(Maze2DSingleGoal, self).step(action)
+        super().step(action)
         assert self._goal_pos is not None
         if maze2d_base.is_same_pos(self._agent_pos, self._goal_pos):
             self._last_reward = self._rewards[1]

@@ -1,5 +1,6 @@
 import numpy as np
 
+
 DEFAULT_MAZE = '''
 +-----+
 |     |
@@ -10,7 +11,8 @@ DEFAULT_MAZE = '''
 +-----+
 '''
 
-HARD_MAZE2 = '''
+
+HARD_MAZE = '''
 +--------+-----+
 |              |
 |              |
@@ -30,7 +32,7 @@ HARD_MAZE2 = '''
 '''
 
 
-class MazeFactoryBase(object):
+class MazeFactoryBase:
     def __init__(self, maze_str=DEFAULT_MAZE):
         self._maze = self._parse_maze(maze_str)
 
@@ -100,7 +102,7 @@ class TwoRoomsFactory(MazeFactoryBase):
         self._maze = maze_array
 
 
-class Maze(object):
+class Maze:
     def __init__(self, maze_factory):
         self._maze_factory = maze_factory
         # parse maze ...
@@ -129,7 +131,8 @@ class Maze(object):
         self._maze[key] = val
 
     def is_empty(self, pos):
-        if pos[0] >= 0 and pos[0] < self._height and pos[1] >= 0 and pos[1] < self._width:
+        if (pos[0] >= 0 and pos[0] < self._height 
+                and pos[1] >= 0 and pos[1] < self._width):
             return self._maze[tuple(pos)] == ' '
         else:
             return False
@@ -158,7 +161,6 @@ class Maze(object):
 
     def random_empty_grids(self, k):
         '''Return k random empty positions.'''
-        # flattened = self._maze.reshape([-1])
         empty_grids = np.argwhere(self._maze==' ')
         selected = np.random.choice(
                 np.arange(empty_grids.shape[0]),
