@@ -4,7 +4,8 @@ import collections
 from .. import env_base
 
 
-ObservationType = collections.namedtuple('ObservationType', 'image, position, index')
+ObservationType = collections.namedtuple(
+        'ObservationType', 'image, position, index')
 
 
 AGENT_COLOR = (1., 0., 0.)

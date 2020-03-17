@@ -187,7 +187,7 @@ class LapReprLearner:
             # save
             if (step + 1) % self._save_freq == 0:
                 saver_path = os.path.join(saver_dir, 
-                        'agent-{}.ckpt'.format(step+1))
+                        'model-{}.ckpt'.format(step+1))
                 self.save_ckpt(saver_path)
             # print info
             if step == 0 or (step + 1) % self._print_freq == 0:
@@ -195,7 +195,7 @@ class LapReprLearner:
                 logging.info('Training steps per second: {:.4g}.'
                         .format(steps_per_sec))
                 self._print_train_info()
-        saver_path = os.path.join(saver_dir, 'agent.ckpt')
+        saver_path = os.path.join(saver_dir, 'model.ckpt')
         self.save_ckpt(saver_path)
         time_cost = timer.time_cost()
         logging.info('Training finished, time cost {:.4g}s.'.format(time_cost))
@@ -221,7 +221,7 @@ class LapReprConfig(flag_tools.ConfigBase):
         flags.reg_neg=0.0,
         flags.replay_buffer_size=10000,
         # train
-        flags.log_dir = '/tmp/rl_lap_repr/log'
+        flags.log_dir = '/tmp/rl_laprepr/log'
         flags.total_train_steps = 50000
         flags.print_freq = 1000
         flags.save_freq = 10000
@@ -243,6 +243,7 @@ class LapReprConfig(flag_tools.ConfigBase):
         raise NotImplementedError
 
     def _optimizer_factory(self, parameters):
+        opt = getattr(optim, self._flags.opt_args.name)
         opt_fn = opt(parameters, lr=self._flags.opt_args.lr)
         return opt_fn
 
@@ -258,7 +259,6 @@ class LapReprConfig(flag_tools.ConfigBase):
                 model_factory=self._model_factory)
 
     def _build_optimizer(self):
-        opt = getattr(optim, self._flags.opt_args.name)
         self._optimizer_cfg = flag_tools.Flags(
                 optimizer_factory=self._optimizer_factory)
 
