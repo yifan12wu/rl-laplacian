@@ -59,6 +59,8 @@ class LapReprLearner:
 
     @py_tools.store_args
     def __init__(self,
+            # pytorch
+            device=None,
             # env args
             obs_shape=None,
             obs_prepro=None,
@@ -78,8 +80,6 @@ class LapReprLearner:
             total_train_steps=50000,
             print_freq=1000,
             save_freq=10000,
-            # pytorch
-            device=None,
             ):
         self._build()
 
@@ -96,16 +96,12 @@ class LapReprLearner:
         self._train_info = collections.ordereddict()
 
     def _build_model(self):
-        self._repr_fn = self._model_cfg.model_factory(self._obs_shape,
-                self._model_cfg.d)
+        cfg = self._model_cfg
+        self._repr_fn = cfg.model_factory()
 
     def _build_optimizer(self):
         cfg = self._optimizer_cfg
-        opt_fn = getattr(optim, cfg.name)
-        self._optimizer = opt_fn(
-                self._repr_fn.parameters(),
-                lr=cfg.lr,
-                )
+        self._optimizer = cfg.optimizer_factory(self._repr_fn.parameters())
 
     def _build_loss(self, batch):
         s1 = batch.s1
@@ -208,8 +204,82 @@ class LapReprLearner:
         torch.save(self._repr_fn.state_dict(), filepath)
 
 
-class Config(flag_tools.ConfigBase):
+class LapReprConfig(flag_tools.ConfigBase):
 
     def _set_default_flags(self):
         flags = self._flags
+        flags.device = None
+        # agent
+        flags.model_args = flag_tools.Flags(d=20)
+        flags.opt_args = flag_tools.Flags(name='Adam', lr=0.001)
+        flags.n_samples = 10000
+        flags.batch_size = 128
+        flags.discount = 0.9
+        flags.w_neg=1.0,
+        flags.c_neg=1.0,
+        flags.reg_neg=0.0,
+        flags.replay_buffer_size=10000,
+        # train
+        flags.log_dir = '/tmp/rl_lap_repr/log'
+        flags.total_train_steps = 50000
+        flags.print_freq = 1000
+        flags.save_freq = 10000
+
+    def _build(self):
+        self._build_env()
+        self._build_model()
+        self._build_optimizer()
+        self._build_args()
+
+    def _build_env(self):
+        dummy_env = self._env_factory()
+        dummy_time_step = dummy_env.reset()
+        self._action_spec = dummy_env.action_spec
+        self._obs_prepro = lambda x: x
+        self._obs_shape = list(self._obs_prepro(
+            dummy_time_step.observation).shape)
+
+    def _env_factory(self):
+        raise NotImplementedError
+
+    def _build_model(self):
+        def model_factory():
+            raise NotImplementedError
+        self._model_cfg = flag_tools.Flags(model_factory=model_factory)
+
+    def _build_optimizer(self):
+        opt = getattr(optim, self._flags.opt_args.name)
+        def optimizer_factory(parameters):
+            opt_fn = opt(parameters, lr=self._flags.opt_args.lr)
+            return opt_fn
+        self._optimizer_cfg = flag_tools.Flags(
+                optimizer_factory=optimizer_factory)
+
+    def _build_args(self):
+        args = flag_tools.Flags()
+        args.device = self._flags.device
+        # env args
+        args.obs_shape = self._obs_shape
+        args.obs_prepro = self._obs_prepro
+        args.env_factory = self._env_factory
+        # learner args
+        args.model_cfg = self._model_cfg
+        args.optimizer_cfg = self._optimizer_cfg
+        args.n_samples = self._flags.n_samples
+        args.batch_size = self._flags.batch_size
+        args.discount = self._flags.discount
+        args.w_neg = self._flags.w_neg
+        args.c_neg = self._flags.c_neg
+        args.ref_neg = self._flags.reg_neg
+        args.replay_buffer_size = self._flags.replay_buffer_size
+        # training args
+        args.log_dir = self._flags.log_dir
+        args.total_train_steps = self._flags.total_train_steps
+        args.print_freq = self._flags.print_freq
+        args.save_freq = self._flags.save_freq
+        self._args = args
+
+    @property
+    def args(self):
+        return vars(self._args)
 
