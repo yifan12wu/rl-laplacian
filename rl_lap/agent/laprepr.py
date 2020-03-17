@@ -211,8 +211,7 @@ class LapReprConfig(flag_tools.ConfigBase):
         flags.device = None
         flags.env_id = None
         # agent
-        flags.model_args = flag_tools.Flags(d=20)
-        flags.opt_args = flag_tools.Flags(name='Adam', lr=0.001)
+        flags.d = 20
         flags.n_samples = 10000
         flags.batch_size = 128
         flags.discount = 0.9
@@ -220,6 +219,7 @@ class LapReprConfig(flag_tools.ConfigBase):
         flags.c_neg=1.0,
         flags.reg_neg=0.0,
         flags.replay_buffer_size=10000,
+        flags.opt_args = flag_tools.Flags(name='Adam', lr=0.001)
         # train
         flags.log_dir = '/tmp/rl_laprepr/log'
         flags.total_train_steps = 50000
