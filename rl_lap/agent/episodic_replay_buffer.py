@@ -39,7 +39,7 @@ class EpisodicReplayBuffer:
                 episode = []
                 H = len(self._episode_buffer)
                 for h in range(H):
-                    epi_step = EpisodicStep(self._episode_buffer[i], 
+                    epi_step = EpisodicStep(self._episode_buffer[h], 
                             h + 1, H, self._r)
                     episode.append(epi_step)
                 # save as data
@@ -76,7 +76,7 @@ class EpisodicReplayBuffer:
         s = []
         for epi_idx in epi_indices:
             episode = self._episodes[epi_idx]
-            i = np.random.randint(episode[0].step.H)
+            i = np.random.randint(episode[0].H)
             s.append(episode[i])
         return s
 
@@ -87,11 +87,16 @@ class EpisodicReplayBuffer:
         s2 = []
         for epi_idx in epi_indices:
             episode = self._episodes[epi_idx]
-            H = episodes[0]step.H
+            H = episode[0].H
+            # '''
+            # TODO: fast sampling
             sample_distr = np.ones(H - 1)
             for i in range(H - 1):
                 sample_distr[i] = np.power(discount, i)
+            sample_distr /= np.sum(sample_distr)
             interval = np.random.choice(H - 1, p=sample_distr)
+            # '''
+            # interval = np.random.choice(H - 1)
             i = np.random.randint(H - interval - 1)
             s1.append(episode[i])
             s2.append(episode[i + interval + 1])

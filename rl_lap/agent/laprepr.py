@@ -62,6 +62,7 @@ class LapReprLearner:
             # pytorch
             device=None,
             # env args
+            action_spec=None,
             obs_shape=None,
             obs_prepro=None,
             env_factory=None,
@@ -93,11 +94,12 @@ class LapReprLearner:
         self._replay_buffer = episodic_replay_buffer.EpisodicReplayBuffer(
                 max_size=self._replay_buffer_size)
         self._global_step = 0
-        self._train_info = collections.ordereddict()
+        self._train_info = collections.OrderedDict()
 
     def _build_model(self):
         cfg = self._model_cfg
         self._repr_fn = cfg.model_factory()
+        self._repr_fn.to(device=self._device)
 
     def _build_optimizer(self):
         cfg = self._optimizer_cfg
@@ -215,10 +217,10 @@ class LapReprConfig(flag_tools.ConfigBase):
         flags.n_samples = 10000
         flags.batch_size = 128
         flags.discount = 0.9
-        flags.w_neg=1.0,
-        flags.c_neg=1.0,
-        flags.reg_neg=0.0,
-        flags.replay_buffer_size=10000,
+        flags.w_neg=1.0
+        flags.c_neg=1.0
+        flags.reg_neg=0.0
+        flags.replay_buffer_size=10000
         flags.opt_args = flag_tools.Flags(name='Adam', lr=0.001)
         # train
         flags.log_dir = '/tmp/rl_laprepr/log'
@@ -266,8 +268,10 @@ class LapReprConfig(flag_tools.ConfigBase):
         args = flag_tools.Flags()
         args.device = self._flags.device
         # env args
+        args.action_spec = self._action_spec
         args.obs_shape = self._obs_shape
         args.obs_prepro = self._obs_prepro
+        args.action_spec = self._action_spec
         args.env_factory = self._env_factory
         # learner args
         args.model_cfg = self._model_cfg
@@ -277,7 +281,7 @@ class LapReprConfig(flag_tools.ConfigBase):
         args.discount = self._flags.discount
         args.w_neg = self._flags.w_neg
         args.c_neg = self._flags.c_neg
-        args.ref_neg = self._flags.reg_neg
+        args.reg_neg = self._flags.reg_neg
         args.replay_buffer_size = self._flags.replay_buffer_size
         # training args
         args.log_dir = self._flags.log_dir
