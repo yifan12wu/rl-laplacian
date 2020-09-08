@@ -8,8 +8,37 @@ import collections
 EpisodicStep = collections.namedtuple('EpisodicStep', 'step, h, H, r')
 
 
+def discounted_sampling(ranges, discount):
+    """Draw samples from the discounted distribution over 0, ...., n - 1, 
+    where n is a range. The input ranges is a batch of such n`s.
+
+    The discounted distribution is defined as
+    p(y = i) = (1 - discount) * discount^i / (1 - discount^n).
+
+    This function implement inverse sampling. We first draw
+    seeds from uniform[0, 1) then pass them through the inverse cdf
+    floor[ log(1 - (1 - discount^n) * seeds) / log(discount) ]
+    to get the samples.
+    """
+    assert np.min(ranges) >= 1
+    assert discount >= 0 and discount <= 1
+    seeds = np.random.uniform(size=ranges.shape)
+    if discount == 0:
+        samples = np.zeros_like(seeds, dtype=np.int64)
+    elif discount == 1:
+        samples = np.floor(seeds * ranges, dtype=np.int64)
+    else:
+        samples = (np.log(1 - (1 - np.power(discount, ranges)) * seeds) 
+                / np.log(discount))
+        samples = np.floor(samples, dtype=np.int64)
+    return samples
+
+
 class EpisodicReplayBuffer:
-    '''Only store full episodes.'''
+    """Only store full episodes.
+    
+    Sampling returns EpisodicStep objects.
+    """
 
     def __init__(self, max_size):
         self._max_size = max_size
@@ -28,12 +57,15 @@ class EpisodicReplayBuffer:
         return self._max_size
 
     def add_steps(self, steps):
-        '''
+        """
         steps: a list of Step(time_step, action, context).
-        '''
+        """
         for step in steps:
             self._episode_buffer.append(step)
             self._r += step.time_step.reward
+            # Push each step into the episode buffer until an end-of-episode
+            # step is found. 
+            # self._r is used to track the cumulative return in each episode.
             if step.time_step.is_last:
                 # construct a formal episode
                 episode = []
@@ -59,8 +91,7 @@ class EpisodicReplayBuffer:
                 self._r = 0.0
 
     def sample_transitions(self, batch_size):
-        epi_indices = np.random.choice(
-            self._current_size, batch_size, replace=True)
+        epi_indices = np.random.randint(self._current_size, size=batch_size)
         s1 = []
         s2 = []
         for epi_idx in epi_indices:
@@ -71,8 +102,7 @@ class EpisodicReplayBuffer:
         return s1, s2
 
     def sample_steps(self, batch_size):
-        epi_indices = np.random.choice(
-            self._current_size, batch_size, replace=True)
+        epi_indices = np.random.randint(self._current_size, size=batch_size)
         s = []
         for epi_idx in epi_indices:
             episode = self._episodes[epi_idx]
