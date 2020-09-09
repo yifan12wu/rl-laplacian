@@ -119,7 +119,7 @@ class EpisodicReplayBuffer:
         step_ranges = self._gather_episode_lengths(episode_indices)
         step1_indices = uniform_sampling(step_ranges - 1)
         intervals = discounted_sampling(
-            step_ranges - step1_indices, discount=discount) + 1
+            step_ranges - step1_indices - 1, discount=discount) + 1
         step2_indices = step1_indices + intervals
         s1 = []
         s2 = []
