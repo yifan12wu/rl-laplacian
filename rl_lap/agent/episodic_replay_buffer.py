@@ -34,6 +34,10 @@ def discounted_sampling(ranges, discount):
     return samples
 
 
+def uniform_sampling(ranges):
+    return discounted_sampling(ranges, discount=1.0)
+
+
 class EpisodicReplayBuffer:
     """Only store full episodes.
     
@@ -90,44 +94,47 @@ class EpisodicReplayBuffer:
                 self._episode_buffer = []
                 self._r = 0.0
 
-    def sample_transitions(self, batch_size):
-        epi_indices = np.random.randint(self._current_size, size=batch_size)
-        s1 = []
-        s2 = []
-        for epi_idx in epi_indices:
-            episode = self._episodes[epi_idx]
-            i = np.random.randint(episode[0].step.H - 1)
-            s1.append(episode[i])
-            s2.append(episode[i + 1])
-        return s1, s2
-
     def sample_steps(self, batch_size):
-        epi_indices = np.random.randint(self._current_size, size=batch_size)
+        episode_indices = self._sample_episodes(batch_size)
+        step_ranges = self._gather_episode_lengths(episode_indices)
+        step_indices = uniform_sampling(step_ranges)
         s = []
-        for epi_idx in epi_indices:
-            episode = self._episodes[epi_idx]
-            i = np.random.randint(episode[0].H)
-            s.append(episode[i])
+        for epi_idx, step_idx in zip(episode_indices, step_indices):
+            s.append(self._episodes[epi_idx][step_idx])
         return s
 
-    def sample_pairs(self, batch_size, discount=0.0):
-        epi_indices = np.random.choice(
-            self._current_size, batch_size, replace=True)
+    def sample_transitions(self, batch_size):
+        episode_indices = self._sample_episodes(batch_size)
+        step_ranges = self._gather_episode_lengths(episode_indices)
+        step_indices = uniform_sampling(step_ranges - 1)
         s1 = []
         s2 = []
-        for epi_idx in epi_indices:
-            episode = self._episodes[epi_idx]
-            H = episode[0].H
-            # '''
-            # TODO: fast sampling
-            sample_distr = np.ones(H - 1)
-            for i in range(H - 1):
-                sample_distr[i] = np.power(discount, i)
-            sample_distr /= np.sum(sample_distr)
-            interval = np.random.choice(H - 1, p=sample_distr)
-            # '''
-            # interval = np.random.choice(H - 1)
-            i = np.random.randint(H - interval - 1)
-            s1.append(episode[i])
-            s2.append(episode[i + interval + 1])
+        for epi_idx, step_idx in zip(episode_indices, step_indices):
+            s1.append(self._episodes[epi_idx][step_idx])
+            s2.append(self._episodes[epi_idx][step_idx + 1])
         return s1, s2
+
+    def sample_pairs(self, batch_size, discount=0.0):
+        episode_indices = self._sample_episodes(batch_size)
+        step_ranges = self._gather_episode_lengths(episode_indices)
+        step1_indices = uniform_sampling(step_ranges - 1)
+        intervals = discounted_sampling(
+            step_ranges - step1_indices, discount=discount) + 1
+        step2_indices = step1_indices + intervals
+        s1 = []
+        s2 = []
+        for epi_idx, step1_idx, step2_idx in zip(
+                episode_indices, step1_indices, step2_indices):
+            s1.append(self._episodes[epi_idx][step1_idx])
+            s2.append(self._episodes[epi_idx][step2_idx])
+        return s1, s2
+
+    def _sample_episodes(self, batch_size):
+        return np.random.randint(self._current_size, size=batch_size)
+
+    def _gather_episode_lengths(self, episode_indices):
+        lengths = []
+        for index in episode_indices:
+            lengths.append(len(self._episodes[index]))
+        return np.array(lengths, dtype=np.int64)
+
