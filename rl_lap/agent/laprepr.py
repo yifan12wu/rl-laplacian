@@ -294,3 +294,7 @@ class LapReprConfig(flag_tools.ConfigBase):
     def args(self):
         return vars(self._args)
 
+    @property
+    def args_as_flags(self):
+        return self._args
+

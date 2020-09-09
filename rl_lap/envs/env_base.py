@@ -6,7 +6,7 @@ import numpy as np
 TimeStep = collections.namedtuple('TimeStep', 
         'observation, reward, is_final, is_last, info')
 
-class ContinuousActionSpec(object):
+class ContinuousActionSpec:
 
     def __init__(self, low, high):
         self.low = low
@@ -20,7 +20,7 @@ class ContinuousActionSpec(object):
         return np.random.uniform(self.low, self.high, size=size)
 
 
-class DiscreteActionSpec(object):
+class DiscreteActionSpec:
 
     def __init__(self, n):
         self.n = n
@@ -31,16 +31,8 @@ class DiscreteActionSpec(object):
     def sample_batch(self, size):
         return np.random.randint(self.n, size=size)
 
-'''
-class StepType(object):
 
-    FIRST = 0
-    MID = 1
-    FINAL = 2
-'''
-
-
-class Task(object):
+class Task:
 
     def begin_episode(self):
         """
@@ -78,7 +70,7 @@ class Task(object):
         raise NotImplementedError
 
 
-class Environment(object):
+class Environment:
 
     def __init__(self, task):
         self._task = task

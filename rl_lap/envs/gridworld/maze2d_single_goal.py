@@ -56,14 +56,17 @@ class Maze2DSingleGoal(maze2d_base.Maze2DBase):
 
 
     def get_observation(self):
-        agent_obs = self.pos_to_obs(self._agent_pos)
-        goal_obs = self.pos_to_obs(self._goal_pos)
-        return ObservationType(agent=agent_obs, goal=goal_obs)
+        return self.pos_to_obs(self._agent_pos)
 
     def get_reward(self):
         return self._last_reward
 
-    def pos_to_full_obs(self, pos):
-        obs = self.pos_to_obs(pos)
-        return ObservationType(agent=obs, goal=obs)
+    def pos_to_obs(self, pos):
+        agent_obs = super().pos_to_obs(pos)
+        goal_obs = super().pos_to_obs(self._goal_pos)
+        return ObservationType(agent=agent_obs, goal=goal_obs)
+
+    @property
+    def goal_pos(self):
+        return self._goal_pos
 

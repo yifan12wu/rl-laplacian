@@ -26,11 +26,11 @@ def discounted_sampling(ranges, discount):
     if discount == 0:
         samples = np.zeros_like(seeds, dtype=np.int64)
     elif discount == 1:
-        samples = np.floor(seeds * ranges, dtype=np.int64)
+        samples = np.floor(seeds * ranges).astype(np.int64)
     else:
         samples = (np.log(1 - (1 - np.power(discount, ranges)) * seeds) 
                 / np.log(discount))
-        samples = np.floor(samples, dtype=np.int64)
+        samples = np.floor(samples).astype(np.int64)
     return samples
 
 
