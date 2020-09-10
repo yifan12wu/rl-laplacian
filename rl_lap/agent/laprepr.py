@@ -75,7 +75,7 @@ class LapReprLearner:
             w_neg=1.0,
             c_neg=1.0,
             reg_neg=0.0,
-            replay_buffer_size=10000,
+            replay_buffer_size=100000,
             # trainer args
             log_dir='/tmp/rl/log',
             total_train_steps=50000,
@@ -220,7 +220,7 @@ class LapReprConfig(flag_tools.ConfigBase):
         flags.w_neg=1.0
         flags.c_neg=1.0
         flags.reg_neg=0.0
-        flags.replay_buffer_size=10000
+        flags.replay_buffer_size=100000
         flags.opt_args = flag_tools.Flags(name='Adam', lr=0.001)
         # train
         flags.log_dir = '/tmp/rl_laprepr/log'

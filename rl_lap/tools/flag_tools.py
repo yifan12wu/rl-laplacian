@@ -65,7 +65,7 @@ def save_flags(flags, log_dir, filename='flags.yaml'):
 def load_flags(log_dir='', filename='flags.yaml'):
     filepath = os.path.join(log_dir, filename)
     with open(filepath, 'r') as f:
-        d = yaml.load(f)
+        d = yaml.load(f, Loader=yaml.Loader)
     return dict_to_flags(d)
 
 
