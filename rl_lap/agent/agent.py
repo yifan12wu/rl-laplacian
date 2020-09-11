@@ -61,7 +61,7 @@ class Agent:
         self._replay_buffer = episodic_replay_buffer.EpisodicReplayBuffer(
                 max_size=self._replay_buffer_size)
         self._global_step = 0
-        self._train_info = collections.ordereddict()
+        self._train_info = collections.OrderedDict()
 
     def _build_optimizer(self): 
         raise NotImplementedError
@@ -98,7 +98,7 @@ class Agent:
         return np.stack(obs_batch, axis=0)
 
     def _get_action_batch(self, steps):
-        action_batch = [self._obs_prepro(s.step.action) for s in steps]
+        action_batch = [s.step.action for s in steps]
         return np.stack(action_batch, axis=0)
 
     def _get_r_dsc_batch(self, steps2):
