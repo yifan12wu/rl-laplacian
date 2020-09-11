@@ -1,5 +1,4 @@
 import os
-import time
 import logging
 import collections
 
@@ -125,7 +124,6 @@ class LapReprLearner:
         return self._action_spec.sample(), None
 
     def _get_obs_batch(self, steps):
-        # each step is a tuple of (time_step, action, context)
         obs_batch = [self._obs_prepro(s.step.time_step.observation)
                 for s in steps]
         return np.stack(obs_batch, axis=0)
@@ -217,10 +215,10 @@ class LapReprConfig(flag_tools.ConfigBase):
         flags.n_samples = 10000
         flags.batch_size = 128
         flags.discount = 0.9
-        flags.w_neg=1.0
-        flags.c_neg=1.0
-        flags.reg_neg=0.0
-        flags.replay_buffer_size=100000
+        flags.w_neg = 1.0
+        flags.c_neg = 1.0
+        flags.reg_neg = 0.0
+        flags.replay_buffer_size = 100000
         flags.opt_args = flag_tools.Flags(name='Adam', lr=0.001)
         # train
         flags.log_dir = '/tmp/rl_laprepr/log'
@@ -271,7 +269,6 @@ class LapReprConfig(flag_tools.ConfigBase):
         args.action_spec = self._action_spec
         args.obs_shape = self._obs_shape
         args.obs_prepro = self._obs_prepro
-        args.action_spec = self._action_spec
         args.env_factory = self._env_factory
         # learner args
         args.model_cfg = self._model_cfg

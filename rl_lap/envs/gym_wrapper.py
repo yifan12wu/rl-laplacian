@@ -70,8 +70,5 @@ class Environment(env_base.Environment):
 
     def __init__(self, env_id):
         task = GymTask(env_id)
-        super(Environment, self).__init__(task)
+        super().__init__(task)
 
-
-    def render(self, *args, **kwargs):
-        return self._task.env.render(*args, **kwargs)

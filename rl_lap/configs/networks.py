@@ -51,10 +51,6 @@ class DiscreteQNetMLP(nn.Module):
         else:
             n_in = int(np.prod(np.array(input_shape)))
         self.out_layer = nn.Linear(n_in, n_actions)
-        # torch.nn.init.uniform_(
-        #         self.out_layer.weight, -0.001, 0.001)
-        # torch.nn.init.constant_(
-        #         self.out_layer.bias, 0.0)
 
     def forward(self, x):
         h = self.mlp(x)
