@@ -39,7 +39,6 @@ class DqnReprAgent(dqn_agent.DqnAgent):
         a = self._get_action_batch(steps1)
         s1, s2 = map(self._get_obs_batch, [steps1, steps2])
         sg = self._get_goal_obs_batch(steps2)
-        # compute reward and discount
         r, dsc = self._get_r_dsc_batch(steps2)
         batch = flag_tools.Flags()
         batch.s1 = self._tensor(s1)
@@ -53,7 +52,23 @@ class DqnReprAgent(dqn_agent.DqnAgent):
         return batch
 
     def _get_repr_reward(self, r, s2, sg):
-        return 0
+        if self._reward_mode == 'l2':
+            # compute raw distance between s2 and sg
+            dist = (s2 - sg).flatten(start_dim=1).norm(dim=-1)
+            r = - dist * self._dist_reward_coeff
+        elif self._reward_mode == 'rawmix':
+            # mix the raw distance with the original reward
+            dist = (s2 - sg).flatten(start_dim=1).norm(dim=-1)
+            r = - dist * self._dist_reward_coeff * 0.5 + r * 0.5
+        elif self._reward_mode == 'mix':
+            # mix the learned distance with the original reward
+            with torch.no_grad():
+                s2_repr = self._repr_fn(s2)
+                sg_repr = self._repr_fn(sg) 
+            dist = (s2_repr - sg_repr).norm(dim=-1)
+            r = - dist * self._dist_reward_coeff * 0.5 + r * 0.5
+        # otherwise reward_mode == 'sparse' then keep r
+        return r
             
 
 class DqnReprAgentModel(nn.Module):
@@ -79,7 +94,11 @@ class DqnReprAgentConfig(dqn_agent.DqnAgentConfig):
         flags.repr_model_cfg = None
 
     def _repr_model_factory(self):
-        """Construct model, load from checkpoint."""
+        """Build model and load from checkpoint."""
+        raise NotImplementedError
+
+    def _goal_obs_prepro(self, obs):
+        """Get preprocessed goal representation."""
         raise NotImplementedError
 
     def _model_factory(self):
@@ -87,6 +106,15 @@ class DqnReprAgentConfig(dqn_agent.DqnAgentConfig):
                 q_model_factory=self._q_model_factory,
                 repr_model_factory=self._repr_model_factory
                 )
+
+    def _build_args(self):
+        args = self._args
+        flags = self._flags
+        args.reward_mode = flags.reward_mode
+        args.dist_reward_coeff = flags.dist_reward_coeff
+        args.goal_obs_prepro = self._goal_obs_prepro
+
+
 
 
 
