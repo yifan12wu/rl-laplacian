@@ -1,4 +1,5 @@
 import os
+import logging
 import torch
 
 from ..agent import dqn_repr_agent
@@ -28,7 +29,7 @@ class Config(dqn_repr_agent.DqnReprAgentConfig):
         flags.replay_update_num = 1
         # train
         flags.log_dir = '/tmp/rl_dqn/log'
-        flags.total_train_steps = 50000
+        flags.total_train_steps = 30000
         flags.print_freq = 1000
         flags.save_freq = 10000
         flags.test_freq = 1000
@@ -66,6 +67,7 @@ class Config(dqn_repr_agent.DqnReprAgentConfig):
         model = model_config.args_as_flags.model_cfg.model_factory()
         # load model from checkpoint
         model.load_state_dict(torch.load(model_ckpt))
+        logging.info('Representation model loaded from {}.'.format(model_ckpt))
         return model
 
 

@@ -108,6 +108,7 @@ class DqnReprAgentConfig(dqn_agent.DqnAgentConfig):
                 )
 
     def _build_args(self):
+        super()._build_args()
         args = self._args
         flags = self._flags
         args.reward_mode = flags.reward_mode
