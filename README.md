@@ -25,6 +25,12 @@ If you use this codebase for your research, please cite the paper:
 
 Visualize learned representations:
 
+<p float="left">
+  <img src="figures/visualize_reprs/OneRoom.png" width="100" />
+  <img src="figures/visualize_reprs/TwoRoom.png" width="100" /> 
+  <img src="figures/visualize_reprs/HardMaze.png" width="100" />
+</p>
+
 ![repr_OneRoom](figures/visualize_reprs/OneRoom.png) |
 ![repr_TwoRoom](figures/visualize_reprs/TwoRoom.png) |
 ![repr_HardMaze](figures/visualize_reprs/HardMaze.png)
