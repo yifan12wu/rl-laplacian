@@ -70,17 +70,15 @@ def load_flags(log_dir='', filename='flags.yaml'):
 
 
 def auto_type(val):
-    '''
-    Cast val(type=str) into detected type.
-    '''
+    """Cast val(type=str) into detected type."""
     return ast.literal_eval(val)
 
 
 def parse_args(flags, keyword='args'):
-    '''
+    """
     Assume flags.args is a list of additional flags 
         e.g. not explicitly defined by argparse.
-    '''
+    """
     new_flags = Flags()
     for key, val in vars(flags).items():
         if key != keyword:
@@ -109,7 +107,7 @@ class ConfigBase:
         self._build()
 
     def _set_default_flags(self):
-        '''Set flags that can be updated later.'''
+        """Set flags that can be updated later."""
         pass
 
     def _build(self):

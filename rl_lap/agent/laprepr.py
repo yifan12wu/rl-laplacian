@@ -24,7 +24,7 @@ def pos_loss(x1, x2):
 
 
 def neg_loss(x, c=1.0, reg=0.0):
-    '''
+    """
     x: n * d.
     sample based approximation for
     (E[x x^T] - c * I / d)^2
@@ -34,7 +34,7 @@ def neg_loss(x, c=1.0, reg=0.0):
     reg * E[(x^T x - c)^2] / n
         = reg * E[(x^T x)^2 - 2c x^T x + c^2] / n
     for reg in [0, 1]
-    '''
+    """
     n = x.shape[0]
     d = x.shape[1]
     inprods = x @ x.T

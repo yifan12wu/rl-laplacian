@@ -57,7 +57,7 @@ class MazeFactoryBase:
 
 
 class SquareRoomFactory(MazeFactoryBase):
-    '''generate a square room with given size'''
+    """generate a square room with given size"""
     def __init__(self, size):
         maze_array = np.zeros([size+2, size+2], dtype=str)
         maze_array[:] = ' '
@@ -73,7 +73,7 @@ class SquareRoomFactory(MazeFactoryBase):
 
 
 class FourRoomsFactory(MazeFactoryBase):
-    '''generate four rooms, each with the given size'''
+    """generate four rooms, each with the given size"""
     def __init__(self, size):
         maze_array = np.zeros([size*2+3, size*2+3], dtype=str)
         maze_array[:] = ' '
