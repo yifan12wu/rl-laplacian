@@ -149,7 +149,6 @@ class Agent:
         log_dir = self._log_dir
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
-        #test_agent = TestAgent(learning_agent)
         actor = actors.StepActor(self._env_factory)
         evaluator = evaluator_lib.Evaluator(self._env_factory)
         results_file = os.path.join(log_dir, 'results.csv')
