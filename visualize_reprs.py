@@ -96,9 +96,9 @@ def main():
     plt.imshow(map_2, interpolation='none')
     plt.xticks([])
     plt.yticks([])
-    figfile = os.path.join(output_dir, '{}.pdf'.format(flags.env_id))
+    plt.title(flags.env_id)
+    figfile = os.path.join(output_dir, '{}.png'.format(flags.env_id))
     plt.savefig(figfile, bbox_inches='tight')
-    # plt.show()
     plt.clf()
 
 

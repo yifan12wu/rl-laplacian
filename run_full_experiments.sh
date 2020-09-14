@@ -11,7 +11,7 @@
 ./run_visualize_reprs.sh HardMaze
 
 # train agent with shaped rewards
-for r_mode in "mix rawmix l2 sparse"
+for r_mode in mix rawmix l2 sparse
 do
     ./run_dqn_repr.sh OneRoom ${r_mode} && \
     ./run_dqn_repr.sh TwoRoom ${r_mode} && \
