@@ -20,3 +20,17 @@ If you use this codebase for your research, please cite the paper:
   year={2019}
 }
 ```
+
+## Example Plots
+
+Visualize learned representations:
+
+![repr_OneRoom](figures/visualize_reprs/OneRoom.png)
+![repr_TwoRoom](figures/visualize_reprs/TwoRoom.png)
+![repr_HardMaze](figures/visualize_reprs/HardMaze.png)
+
+Compare learning curves:
+
+![dqn_OneRoom](figures/learning_curves/OneRoom.png)
+![dqn_TwoRoom](figures/learning_curves/TwoRoom.png)
+![dqn_HardMaze](figures/learning_curves/HardMaze.png)
