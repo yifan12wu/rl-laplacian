@@ -26,17 +26,15 @@ If you use this codebase for your research, please cite the paper:
 Visualize learned representations:
 
 <p float="left">
-  <img src="figures/visualize_reprs/OneRoom.png" width="100" />
-  <img src="figures/visualize_reprs/TwoRoom.png" width="100" /> 
-  <img src="figures/visualize_reprs/HardMaze.png" width="100" />
+  <img src="figures/visualize_reprs/OneRoom.png" width="200" />
+  <img src="figures/visualize_reprs/TwoRoom.png" width="200" /> 
+  <img src="figures/visualize_reprs/HardMaze.png" width="200" />
 </p>
-
-![repr_OneRoom](figures/visualize_reprs/OneRoom.png) |
-![repr_TwoRoom](figures/visualize_reprs/TwoRoom.png) |
-![repr_HardMaze](figures/visualize_reprs/HardMaze.png)
 
 Compare learning curves:
 
-![dqn_OneRoom](figures/learning_curves/OneRoom.png) |
-![dqn_TwoRoom](figures/learning_curves/TwoRoom.png) |
-![dqn_HardMaze](figures/learning_curves/HardMaze.png)
+<p float="left">
+  <img src="figures/learning_curves/OneRoom.png" width="200" />
+  <img src="figures/learning_curves/TwoRoom.png" width="200" /> 
+  <img src="figures/learning_curves/HardMaze.png" width="200" />
+</p>
