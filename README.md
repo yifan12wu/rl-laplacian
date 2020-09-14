@@ -8,6 +8,7 @@ This codebase is a re-implementation and was not the one used for generating the
 
 Please refer to `run_full_experiments.sh` for running representation learning, reward shaping, and visualizing representations. `plot_curves.py` is for plotting the learning curve comparisons between different shaped rewards.
 
+The code works with Python>=3.6 and PyTorch>=1.0.
 
 If you use this codebase for your research, please cite the paper:
 
