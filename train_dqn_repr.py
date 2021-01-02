@@ -38,8 +38,6 @@ def main():
     timer = timer_tools.Timer()
     if FLAGS.log_sub_dir == 'auto_d':
         FLAGS.log_sub_dir = logging_tools.get_datetime()
-    if FLAGS.log_sub_dir == 'auto_n':
-        FLAGS.log_sub_dir = logging_tools.get_unique_dir()
     # pass args to config
     cfg_cls = get_config_cls()
     flags = flag_tools.Flags()
